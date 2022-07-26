@@ -80,7 +80,7 @@ const PokemonList: React.FC<{
 	return (
 		<div className="flex flex-col items-center ">
 			<Image
-				src={`${props.pokemon.sprites}`}
+				src={`${props.pokemon.spriteUrl}`}
 				alt={`${props.pokemon.name}`}
 				width={100}
 				height={100}
