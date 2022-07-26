@@ -7,7 +7,7 @@ const doDbFill = async () => {
 	const formattedPokemons = allPokemons.results.map((p, index) => ({
 		id: index + 1,
 		name: <string>p.name,
-		spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${
+		spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/front_default/${
 			index + 1
 		}.png`,
 	}));
