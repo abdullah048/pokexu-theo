@@ -60,9 +60,13 @@ const ResultPage: React.FC<{
 		<div className="flex flex-col items-center">
 			<h2 className="text-4xl text-center p-5">Results</h2>
 			<div className="flex flex-col w-full max-w-2xl border rounded-xl p-5">
-				{pokemon.map((poki, index) => (
-					<VotingResults pokemon={poki} key={index} />
-				))}
+				{pokemon
+					.sort(
+						(a, b) => generateCountPercentage(b) - generateCountPercentage(a)
+					)
+					.map((poki, index) => (
+						<VotingResults pokemon={poki} key={index} />
+					))}
 			</div>
 		</div>
 	);
