@@ -1,20 +1,24 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import type React from "react";
 import { getOptionsForVote } from "../utils/getRandompokemon";
 
 import { trpc } from "../utils/trpc";
+import { inferQueryResponse } from "./api/trpc/[trpc]";
+
+const btn =
+	"inline-flex items-center px-2.5 py-1.5 border border-gray-500 shadow-sm text-xs font-medium rounded-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
 
 const Home: NextPage = () => {
-	const btn =
-		"inline-flex items-center px-2.5 py-1.5 border border-gray-500 shadow-sm text-xs font-medium rounded-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
-	const [firstId, secondId] = useMemo(() => getOptionsForVote(), []);
+	const [ids, updateIds] = useState(() => getOptionsForVote());
+	const [firstId, secondId] = ids;
 	const [num1, setNum1] = useState<number | undefined>(0);
 	const [num2, setNum2] = useState<number | undefined>(0);
 	useEffect(() => {
 		setNum1(firstId);
 		setNum2(secondId);
-	}, []);
+	}, [firstId, secondId]);
 	const firstPokemon = trpc.useQuery([
 		"example.get-pokemon-by-id",
 		{ id: num1! },
@@ -24,12 +28,15 @@ const Home: NextPage = () => {
 		{ id: num2! },
 	]);
 
-	if (firstPokemon.isLoading || secondPokemon.isLoading) return null;
+	const voteMutation = trpc.useMutation(["example.vote-pokemon"]);
 
 	const voteForRoundest = (selected: number) => {
-		// TODO: Fire mutations to persist changes.
-		setNum1(firstId);
-		setNum2(secondId);
+		if (selected === num1) {
+			voteMutation.mutate({ votedFor: num1!, votedAgainst: num2! });
+		} else {
+			voteMutation.mutate({ votedFor: num2!, votedAgainst: num1! });
+		}
+		updateIds(getOptionsForVote());
 	};
 
 	return (
@@ -41,30 +48,44 @@ const Home: NextPage = () => {
 				Which Pokemon is Roundest?
 			</div>
 			<div className="border rounded-md p-8 flex justify-between items-center max-w-2xl">
-				<div className="w-35 h-35 flex flex-col items-center capitalize">
-					<img
-						src={`${firstPokemon.data?.sprites}`}
-						alt={`${firstPokemon.data?.name}`}
-						className="w-full"
-					/>
-					<div>{firstPokemon.data?.name}</div>
-					<button className={btn} onClick={() => voteForRoundest(num1!)}>
-						Roundest
-					</button>
-				</div>
-				<div className="p-8">VS</div>
-				<div className="w-35 h-35 flex flex-col items-center capitalize">
-					<img
-						src={`${secondPokemon.data?.sprites}`}
-						alt={`${secondPokemon.data?.name}`}
-						className="w-full"
-					/>
-					<div>{secondPokemon.data?.name}</div>
-					<button className={btn} onClick={() => voteForRoundest(num2!)}>
-						Roundest
-					</button>
-				</div>
+				{!firstPokemon.isLoading &&
+					firstPokemon.data &&
+					!secondPokemon.isLoading &&
+					secondPokemon.data && (
+						<>
+							<PokemonList
+								pokemon={firstPokemon.data}
+								vote={() => voteForRoundest(num1!)}
+							/>
+							<div className="p-8">VS</div>
+							<PokemonList
+								pokemon={secondPokemon.data}
+								vote={() => voteForRoundest(num2!)}
+							/>
+						</>
+					)}
 			</div>
+		</div>
+	);
+};
+
+type PokemonFromServer = inferQueryResponse<"example.get-pokemon-by-id">;
+
+const PokemonList: React.FC<{
+	pokemon: PokemonFromServer;
+	vote: () => void;
+}> = (props) => {
+	return (
+		<div className="flex flex-col items-center ">
+			<img
+				src={`${props.pokemon.sprites}`}
+				alt={`${props.pokemon.name}`}
+				className="w-35 h-35"
+			/>
+			{/* <div>{props.pokemon.name}</div> */}
+			<button className={`${btn} capitalize`} onClick={() => props.vote()}>
+				{props.pokemon.name}
+			</button>
 		</div>
 	);
 };
