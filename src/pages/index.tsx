@@ -3,11 +3,13 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import type React from "react";
 import { getOptionsForVote } from "../utils/getRandompokemon";
+import { ThreeDots } from "react-loader-spinner";
 
 import { trpc } from "../utils/trpc";
 import { inferQueryResponse } from "./api/trpc/[trpc]";
 
 import Image from "next/image";
+import Link from "next/link";
 
 const btn =
 	"inline-flex items-center px-2.5 py-1.5 border border-gray-500 shadow-sm text-xs font-medium rounded-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500";
@@ -42,31 +44,59 @@ const Home: NextPage = () => {
 	};
 
 	return (
-		<div className="h-screen w-screen flex justify-center flex-col items-center">
-			<Head>
-				<title>Pokedux</title>
-			</Head>
-			<div className="text-2xl text-center pb-5">
-				Which Pokemon is Roundest?
-			</div>
-			<div className="border rounded-md p-8 flex justify-between items-center max-w-2xl">
-				{!firstPokemon.isLoading &&
-					firstPokemon.data &&
-					!secondPokemon.isLoading &&
-					secondPokemon.data && (
-						<>
-							<PokemonList
-								pokemon={firstPokemon.data}
-								vote={() => voteForRoundest(num1!)}
-							/>
-							<div className="p-8">VS</div>
-							<PokemonList
-								pokemon={secondPokemon.data}
-								vote={() => voteForRoundest(num2!)}
-							/>
-						</>
-					)}
-			</div>
+		<div>
+			{firstPokemon.isLoading && secondPokemon.isLoading ? (
+				<div className="flex items-center flex-col justify-center h-screen w-screen">
+					<>
+						<ThreeDots
+							height="80"
+							width="80"
+							radius="9"
+							color="white"
+							ariaLabel="three-dots-loading"
+						/>
+						<div className="capitalize text-6xl">Page is Loading... (SSR)</div>
+					</>
+				</div>
+			) : (
+				<div className="h-screen w-screen flex justify-center flex-col items-center relative">
+					<Head>
+						<title>Pokedux</title>
+					</Head>
+					<div className="text-2xl text-center pb-5">
+						Which Pokemon is Roundest?
+					</div>
+					<div className="border rounded-md p-8 flex justify-between items-center max-w-2xl">
+						{!firstPokemon.isLoading &&
+							firstPokemon.data &&
+							!secondPokemon.isLoading &&
+							secondPokemon.data && (
+								<>
+									<PokemonList
+										pokemon={firstPokemon.data}
+										vote={() => voteForRoundest(num1!)}
+									/>
+									<div className="p-8">VS</div>
+									<PokemonList
+										pokemon={secondPokemon.data}
+										vote={() => voteForRoundest(num2!)}
+									/>
+								</>
+							)}
+					</div>
+					<div className="absolute bottom-0 w-full text-xl text-center pb-5">
+						<Link
+							className={`${btn}`}
+							href="https://craftzfox-biolinks.netlify.app/">
+							Bio-Links
+						</Link>
+						{" | "}
+						<Link className={`${btn}`} href="/results">
+							Results
+						</Link>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };
@@ -80,7 +110,7 @@ const PokemonList: React.FC<{
 	return (
 		<div className="flex flex-col items-center ">
 			<Image
-				src={`${props.pokemon.spriteUrl}`}
+				src={`${props.pokemon.sprites}`}
 				alt={`${props.pokemon.name}`}
 				width={100}
 				height={100}
